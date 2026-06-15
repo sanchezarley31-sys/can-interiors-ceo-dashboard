@@ -142,8 +142,8 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── Credentials ───────────────────────────────────────────────────────────────
-_ACCESS_USER = st.secrets.get("ACCESS_USER", "CAN-Interiors")
-_ACCESS_KEY  = st.secrets.get("ACCESS_KEY",  "CEO@CAN2026")
+_ACCESS_USER = "CAN-Interiors"
+_ACCESS_KEY  = "CEO@CAN2026"
 
 # ── Session state ─────────────────────────────────────────────────────────────
 if 'authenticated' not in st.session_state:
@@ -283,6 +283,66 @@ kpi(k5, 'Marketing Ready',
     f'of {len(df):,} products have ≥4 photos')
 
 st.markdown('<div style="margin-top:1rem"></div>', unsafe_allow_html=True)
+
+# ── Products by Season ────────────────────────────────────────────────────────
+st.markdown('<div class="section-title">📅 Products by Season</div>', unsafe_allow_html=True)
+
+season_summary = (
+    df.groupby('Season')
+    .agg(
+        Products=('EAN (Primary ID)', 'count'),
+        Stock=('Stock', 'sum'),
+        BOL_Active=('Marketplace (BOL)', lambda x: (x == 'ACTIVE').sum()),
+        Shop_Active=('Online Shop',       lambda x: (x == 'ACTIVE').sum()),
+    )
+    .sort_values('Products', ascending=False)
+    .reset_index()
+)
+
+ss_left, ss_right = st.columns([3, 2])
+
+with ss_left:
+    fig_season = go.Figure(go.Bar(
+        x=season_summary['Products'],
+        y=season_summary['Season'],
+        orientation='h',
+        marker_color=[CLAY if s != 'All Season' else SAGE for s in season_summary['Season']],
+        text=season_summary['Products'].apply(lambda x: f'{x:,} products'),
+        textposition='outside',
+        textfont=dict(color=DARK, size=11),
+    ))
+    fig_season.update_layout(
+        plot_bgcolor=BG, paper_bgcolor=BG,
+        font=dict(color=DARK, size=11),
+        margin=dict(l=10, r=80, t=10, b=10),
+        xaxis=dict(showgrid=True, gridcolor='#EDE5DC', title='Number of products',
+                   range=[0, season_summary['Products'].max() * 1.22]),
+        yaxis=dict(autorange='reversed', tickfont=dict(size=11)),
+        height=max(220, len(season_summary) * 52),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_season, use_container_width=True)
+
+with ss_right:
+    st.markdown('**Season breakdown**')
+    for _, row in season_summary.iterrows():
+        pct = row['Products'] / len(df) * 100
+        tag_color = SAGE if row['Season'] == 'All Season' else CLAY
+        st.markdown(f"""
+        <div style="background:#fff;border-radius:10px;padding:.75rem 1rem;
+                    margin-bottom:.5rem;box-shadow:0 1px 6px rgba(61,43,31,.06);
+                    border-left:4px solid {tag_color}">
+          <span style="font-weight:700;color:{MOCHA};font-size:.95rem">{row['Season']}</span>
+          <span style="float:right;font-size:.8rem;color:#9A8880">{pct:.1f}%</span><br>
+          <span style="font-size:.8rem;color:#777">
+            {row['Products']:,} products &nbsp;·&nbsp;
+            {int(row['Stock']):,} units stock &nbsp;·&nbsp;
+            BOL {int(row['BOL_Active'])} active &nbsp;·&nbsp;
+            Shop {int(row['Shop_Active'])} active
+          </span>
+        </div>""", unsafe_allow_html=True)
+
+st.markdown('<div style="margin-top:.5rem"></div>', unsafe_allow_html=True)
 
 # ── Best Sellers & Profitability ──────────────────────────────────────────────
 st.markdown('<div class="section-title">📊 Best Sellers & Profitability — Top 10 Margin</div>',
