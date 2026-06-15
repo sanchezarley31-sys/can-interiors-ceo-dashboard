@@ -244,13 +244,12 @@ st.markdown(f"""
 # ── KPI Row ───────────────────────────────────────────────────────────────────
 total_bol_rev   = bol_active['BOL_Rev'].sum()
 total_shop_rev  = shop_active['Shop_Rev'].sum()
-total_revenue   = total_bol_rev + total_shop_rev
 total_cost      = df['Cost_Total'].sum()
-net_profit      = total_revenue - total_cost
-margin_pct      = (net_profit / total_revenue * 100) if total_revenue else 0
 total_stock     = df['Stock'].sum()
 avg_margin_bol  = df[df['Margin BOL (%)'] > 0]['Margin BOL (%)'].mean()
+avg_margin_shop = df[df['Margin Shop (%)'] > 0]['Margin Shop (%)'].mean()
 marketing_ready = (df['Unieke_Fotos'] >= 4).sum()
+dual_listed     = ((df['Marketplace (BOL)'] == 'ACTIVE') & (df['Online Shop'] == 'ACTIVE')).sum()
 
 k1, k2, k3, k4, k5 = st.columns(5)
 
@@ -262,21 +261,21 @@ def kpi(col, label, value, sub=''):
       <div class="kpi-sub">{sub}</div>
     </div>""", unsafe_allow_html=True)
 
-kpi(k1, 'Total Revenue (BOL + Shop)',
-    f'€ {total_revenue:,.0f}',
-    f'BOL €{total_bol_rev:,.0f} · Shop €{total_shop_rev:,.0f}')
+kpi(k1, 'BOL.com Potential Revenue',
+    f'€ {total_bol_rev:,.0f}',
+    f'{len(bol_active):,} active products · avg margin {avg_margin_bol:.1f}%')
 
-kpi(k2, 'Total Cost',
+kpi(k2, 'Web Shop Potential Revenue',
+    f'€ {total_shop_rev:,.0f}',
+    f'{len(shop_active):,} active products · avg margin {avg_margin_shop:.1f}%')
+
+kpi(k3, 'Total Inventory Cost',
     f'€ {total_cost:,.0f}',
     f'{total_stock:,} units in stock')
 
-kpi(k3, 'Net Profit',
-    f'€ {net_profit:,.0f}',
-    f'After cost of goods')
-
-kpi(k4, 'Net Profit Margin',
-    f'{margin_pct:.1f} %',
-    f'Avg BOL margin {avg_margin_bol:.1f}%')
+kpi(k4, 'Listed on Both Channels',
+    f'{dual_listed:,}',
+    f'of {len(df):,} total products')
 
 kpi(k5, 'Marketing Ready',
     f'{marketing_ready:,}',
