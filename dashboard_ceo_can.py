@@ -142,8 +142,8 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── Credentials ───────────────────────────────────────────────────────────────
-_ACCESS_USER = "CAN-Interiors"
-_ACCESS_KEY  = "CEO@CAN2026"
+_ACCESS_USER = st.secrets.get("ACCESS_USER", "CAN-Interiors")
+_ACCESS_KEY  = st.secrets.get("ACCESS_KEY",  "CEO@CAN2026")
 
 # ── Session state ─────────────────────────────────────────────────────────────
 if 'authenticated' not in st.session_state:
